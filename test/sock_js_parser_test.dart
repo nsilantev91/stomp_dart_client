@@ -31,7 +31,7 @@ void main() {
       SockJSParser(
         onStompFrame: callback,
         onDone: onDoneCallback,
-      ).parseData(sockJsMsg);
+      ).parseText(sockJsMsg);
     });
 
     test('can parse array with 1 message', () {
@@ -60,7 +60,7 @@ void main() {
       SockJSParser(
         onStompFrame: callback,
         onDone: onDoneCallback,
-      ).parseData(sockJsMsg);
+      ).parseText(sockJsMsg);
     });
 
     test('can parse array with 2 messages', () {
@@ -96,7 +96,7 @@ void main() {
       SockJSParser(
         onStompFrame: callback,
         onDone: onDoneCallback,
-      ).parseData(sockJsMsg);
+      ).parseText(sockJsMsg);
     });
 
     test('don\'t parse open frame', () {
@@ -108,7 +108,7 @@ void main() {
       SockJSParser(
         onStompFrame: callback,
         onDone: onDoneCallback,
-      ).parseData(sockJsMsg);
+      ).parseText(sockJsMsg);
     });
 
     test('don\'t parse Heartbeat frame', () {
@@ -120,7 +120,7 @@ void main() {
       SockJSParser(
         onStompFrame: callback,
         onDone: onDoneCallback,
-      ).parseData(sockJsMsg);
+      ).parseText(sockJsMsg);
     });
 
     test('don\'t parse empty message', () {
@@ -132,7 +132,7 @@ void main() {
       SockJSParser(
         onStompFrame: callback,
         onDone: onDoneCallback,
-      ).parseData(sockJsMsg);
+      ).parseText(sockJsMsg);
     });
 
     test('don\'t parse no json message', () {
@@ -145,7 +145,7 @@ void main() {
       SockJSParser(
         onStompFrame: callback,
         onDone: onDoneCallback,
-      ).parseData(sockJsMsg);
+      ).parseText(sockJsMsg);
     });
 
     test('close frame message', () {
@@ -157,7 +157,7 @@ void main() {
       SockJSParser(
         onStompFrame: callback,
         onDone: onDoneCallback,
-      ).parseData(sockJsMsg);
+      ).parseText(sockJsMsg);
     });
   });
 }

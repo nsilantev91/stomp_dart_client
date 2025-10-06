@@ -26,7 +26,7 @@ void main() {
         count: 1,
       );
 
-      StompParser(callback).parseData(msg);
+      StompParser(callback).parseText(msg);
     });
 
     test('does not unescape headers (v1.0)', () {
@@ -49,7 +49,7 @@ void main() {
         count: 1,
       );
 
-      StompParser(callback).parseData(msg);
+      StompParser(callback).parseText(msg);
     });
 
     test('fails on unescaped header values (v1.0)', () {
@@ -72,7 +72,7 @@ void main() {
         count: 1,
       );
 
-      StompParser(callback).parseData(msg);
+      StompParser(callback).parseText(msg);
     });
 
     test('does unescape header keys and values (^v1.1)', () {
@@ -97,7 +97,7 @@ void main() {
 
       StompParser(callback)
         ..escapeHeaders = true
-        ..parseData(msg);
+        ..parseText(msg);
     });
 
     test('supports escaped colons in headers (^v1.1)', () {
@@ -122,7 +122,7 @@ void main() {
 
       StompParser(callback)
         ..escapeHeaders = true
-        ..parseData(msg);
+        ..parseText(msg);
     });
 
     test('correctly serializes a stomp frame unescaped', () {
@@ -204,7 +204,7 @@ void main() {
 
       StompParser(callback)
         ..escapeHeaders = true
-        ..parseData(msg);
+        ..parseText(msg);
     });
 
     test('can parse frame with empty header and body', () {
@@ -222,7 +222,7 @@ void main() {
 
       StompParser(callback)
         ..escapeHeaders = true
-        ..parseData(msg);
+        ..parseText(msg);
     });
 
     test('respects content-length when parsing', () {
@@ -241,21 +241,21 @@ void main() {
         count: 1,
       );
 
-      StompParser(callback).parseData(msg);
+      StompParser(callback).parseText(msg);
     });
 
     test('fails silently on wrong content-length', () {
       final msg = 'MESSAGE\ncontent-length:10\n\nThis is\x00';
       var callback = expectAsync1((frame) {}, count: 0);
 
-      StompParser(callback).parseData(msg);
+      StompParser(callback).parseText(msg);
     });
 
     test('can parse ping message', () {
       final onFrame = expectAsync1((StompFrame frame) {}, count: 0);
       final onPing = expectAsync0(() => null, count: 1);
 
-      StompParser(onFrame, onPing).parseData('\n');
+      StompParser(onFrame, onPing).parseText('\n');
     });
 
     test('accepts ping/frames with carriage return', () {
@@ -263,8 +263,8 @@ void main() {
       final onPing = expectAsync0(() => null, count: 2);
 
       StompParser(onFrame, onPing)
-        ..parseData('\r\n')
-        ..parseData(
+        ..parseText('\r\n')
+        ..parseText(
             '\r\nMESSAGE\r\ndestination:foo\r\nmessage-id:456\r\n\r\n\x00');
     });
 
@@ -307,8 +307,8 @@ void main() {
       );
 
       StompParser(onFrame)
-        ..parseData(msg)
-        ..parseData(msg2);
+        ..parseText(msg)
+        ..parseText(msg2);
     });
 
     test('can parse multiple messages at once', () {
@@ -349,7 +349,7 @@ void main() {
         count: 2,
       );
 
-      StompParser(onFrame).parseData(msg + msg2);
+      StompParser(onFrame).parseText(msg + msg2);
     });
 
     test('can serialize unicode special characters', () {
@@ -457,8 +457,8 @@ void main() {
       );
 
       StompParser(callback)
-        ..parseData(msg)
-        ..parseData(msg2);
+        ..parseText(msg)
+        ..parseText(msg2);
     });
 
     group('when content-type is missing', () {
@@ -475,7 +475,7 @@ void main() {
           expect(frame.binaryBody, Utf8Encoder().convert(text));
         }, count: 1);
 
-        StompParser(onData).parseData(message);
+        StompParser(onData).parseText(message);
       });
     });
 
@@ -506,7 +506,7 @@ void main() {
 
       StompFrame? parse(Uint8List data) {
         StompFrame? result;
-        StompParser((frame) => result = frame).parseData(data);
+        StompParser((frame) => result = frame).parseBytes(data);
 
         if (result == null) {
           fail('No StompFrame result!');

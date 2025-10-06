@@ -19,20 +19,12 @@ class SockJSParser implements Parser {
   final void Function() onDone;
 
   @override
-  void parseData(dynamic data) {
-    Uint8List byteList;
-    if (data is String) {
-      byteList = Uint8List.fromList(utf8.encode(data));
-    } else if (data is List<int>) {
-      byteList = Uint8List.fromList(data);
-    } else {
-      throw UnsupportedError('Input data type unsupported');
-    }
-
-    _collectData(byteList);
+  void parseText(String data) {
+    parseBytes(utf8.encode(data));
   }
 
-  void _collectData(Uint8List byteList) {
+  @override
+  void parseBytes(Uint8List byteList) {
     if (byteList.isEmpty) {
       return;
     }
@@ -65,12 +57,12 @@ class SockJSParser implements Parser {
       case 'a': //Array of messages
         if (payload is List) {
           for (var item in payload) {
-            _stompParser.parseData(item);
+            _stompParser.parseText(item);
           }
         }
         break;
       case 'm': //message
-        _stompParser.parseData(payload);
+        _stompParser.parseText(payload);
         break;
       case 'c': //Close frame
         onDone();

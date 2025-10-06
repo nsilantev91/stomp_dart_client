@@ -43,18 +43,14 @@ class StompParser implements Parser {
   bool escapeHeaders = false;
 
   @override
-  void parseData(dynamic data) {
-    Uint8List byteList;
-    if (data is String) {
-      byteList = Uint8List.fromList(utf8.encode(data));
-    } else if (data is List<int>) {
-      byteList = Uint8List.fromList(data);
-    } else {
-      throw UnsupportedError('Input data type unsupported ${data.runtimeType}');
-    }
+  void parseText(String data) {
+    parseBytes(utf8.encode(data));
+  }
 
-    for (var i = 0; i < byteList.length; i++) {
-      _parseByte(byteList[i]);
+  @override
+  void parseBytes(Uint8List data) {
+    for (var i = 0; i < data.length; i++) {
+      _parseByte(data[i]);
     }
   }
 

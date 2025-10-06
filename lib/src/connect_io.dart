@@ -1,28 +1,24 @@
 import 'dart:async';
-import 'dart:io';
+import 'dart:io' as io;
 
-import 'package:web_socket_channel/io.dart';
-import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:web_socket/io_web_socket.dart';
+import 'package:web_socket/web_socket.dart';
 
 import 'stomp_config.dart';
 
-Future<WebSocketChannel> connect(StompConfig config) async {
-  try {
-    var webSocketFuture = WebSocket.connect(
-      config.connectUrl,
-      headers: config.webSocketConnectHeaders,
-    );
+Future<WebSocket> connect(StompConfig config) async {
+  var webSocketFuture = io.WebSocket.connect(
+    config.connectUrl,
+    headers: config.webSocketConnectHeaders,
+  );
 
-    if (config.connectionTimeout.inMilliseconds > 0) {
-      webSocketFuture = webSocketFuture.timeout(config.connectionTimeout);
-    }
-
-    var webSocket = await webSocketFuture;
-
-    webSocket.pingInterval = config.pingInterval;
-
-    return IOWebSocketChannel(webSocket);
-  } on SocketException catch (err) {
-    throw WebSocketChannelException.from(err);
+  if (config.connectionTimeout.inMilliseconds > 0) {
+    webSocketFuture = webSocketFuture.timeout(config.connectionTimeout);
   }
+
+  var webSocket = await webSocketFuture;
+
+  webSocket.pingInterval = config.pingInterval;
+
+  return IOWebSocket.fromWebSocket(webSocket);
 }

@@ -17,48 +17,55 @@ void main() {
         import 'dart:io';
         import 'dart:async';
         import 'dart:convert';
-        import 'package:web_socket_channel/io.dart';
+        import 'package:web_socket/io_web_socket.dart';
+        import 'package:web_socket/web_socket.dart';
         import 'package:stomp_dart_client/stomp_dart_client.dart';
         import 'package:stream_channel/stream_channel.dart';
 
         Future<void> hybridMain(StreamChannel channel) async {
           final server = await HttpServer.bind("localhost", 0);
           server.transform(WebSocketTransformer()).listen((webSocket) {
-            var webSocketChannel = IOWebSocketChannel(webSocket);
+            var ioWebSocket = IOWebSocket.fromWebSocket(webSocket);
             var parser = StompParser((frame) {
               if (frame.command == 'CONNECT') {
-                webSocketChannel.sink.add("CONNECTED\nversion:1.2\nheart-beat:${frame.headers['heart-beat']}\n\n\x00");
+                ioWebSocket.sendText("CONNECTED\nversion:1.2\nheart-beat:${frame.headers['heart-beat']}\n\n\x00");
               } else if (frame.command == 'DISCONNECT') {
-                webSocketChannel.sink
-                    .add("RECEIPT\nreceipt-id:${frame.headers['receipt']}\n\n\x00");
+                ioWebSocket.sendText("RECEIPT\nreceipt-id:${frame.headers['receipt']}\n\n\x00");
               } else if (frame.command == 'SUBSCRIBE') {
                 if (frame.headers['destination'] == '/foo') {
-                  webSocketChannel.sink.add(
+                  ioWebSocket.sendText(
                       "MESSAGE\nsubscription:${frame.headers['id']}\nmessage-id:123\ndestination:/foo\ncontent-type:text/plain\n\nThis is the message body\x00");
                 } else if (frame.headers['destination'] == '/bar') {
-                  webSocketChannel.sink.add(utf8.encode(
+                  ioWebSocket.sendBytes(utf8.encode(
                       "MESSAGE\nsubscription:${frame.headers['id']}\nmessage-id:123\ndestination:/bar\ncontent-type:text/plain\n\nThis is the message body\x00"));
                 }
               } else if (frame.command == 'UNSUBSCRIBE' ||
                   frame.command == 'SEND') {
                 if (frame.headers.containsKey('receipt')) {
-                  webSocketChannel.sink.add(
+                  ioWebSocket.sendText(
                       "RECEIPT\nreceipt-id:${frame.headers['receipt']}\n\n\x00");
 
                   if (frame.command == 'UNSUBSCRIBE') {
                     Timer(Duration(milliseconds: 500), () {
-                      webSocketChannel.sink.add(
+                     ioWebSocket.sendText(
                           "MESSAGE\nsubscription:${frame.headers['id']}\nmessage-id:123\ndestination:/foo\ncontent-type:text/plain\n\nThis is the message body\x00");
                     });
                   }
                 }
               } else if (frame.command == 'ACK' || frame.command == 'NACK') {
-                  webSocketChannel.sink.add(
+                  ioWebSocket.sendText(
                       "RECEIPT\nreceipt-id:${frame.headers['receipt']}\n\n\x00");
               }
             });
-            webSocketChannel.stream.listen((request) {
-              parser.parseData(request);
+            ioWebSocket.events.listen((evt) {
+              switch (evt) {
+                case TextDataReceived(text: final text):
+                  parser.parseText(text);
+                case BinaryDataReceived(data: final data):
+                  parser.parseBytes(data);
+                case CloseReceived(code: final code, reason: final reason):
+                  return;
+              }
             });
           });
 

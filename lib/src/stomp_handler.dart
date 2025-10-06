@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:math';
 import 'dart:typed_data';
 
-import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:web_socket/web_socket.dart';
 
 import 'parser.dart';
 import 'sock_js/sock_js_parser.dart';
@@ -36,7 +36,7 @@ class StompHandler {
   final StompConfig config;
 
   late Parser _parser;
-  WebSocketChannel? _channel;
+  WebSocket? _webSocket;
   bool _connected = false;
   bool _isActive = false;
   int _currentReceiptIndex = 0;
@@ -54,13 +54,13 @@ class StompHandler {
   void start() async {
     _isActive = true;
     try {
-      _channel = await platform.connect(config..resetSession());
+      _webSocket = await platform.connect(config..resetSession());
       // It can happen that dispose was called while the future above hasn't completed yet
       // To prevent lingering connections we need to make sure that we disconnect cleanly
       if (!_isActive) {
         _cleanUp();
       } else {
-        _channel!.stream.listen(_onData, onError: _onError, onDone: _onDone);
+        _webSocket!.events.listen(_onData, onError: _onError, onDone: _onDone);
         _connectToStomp();
       }
     } catch (err) {
@@ -70,7 +70,7 @@ class StompHandler {
       } else {
         if (err is TimeoutException) {
           config.onDebugMessage('Connection timed out...reconnecting');
-        } else if (err is WebSocketChannelException) {
+        } else if (err is WebSocketException) {
           config.onDebugMessage('Connection error...reconnecting');
         } else {
           config.onDebugMessage('Unknown connection error...reconnecting');
@@ -190,7 +190,11 @@ class StompHandler {
     config.onDebugMessage('>>> $serializedFrame');
 
     try {
-      _channel!.sink.add(serializedFrame);
+      if (serializedFrame is String) {
+        _webSocket!.sendText(serializedFrame);
+      } else {
+        _webSocket!.sendBytes(serializedFrame);
+      }
     } catch (_) {
       throw StompBadStateException(
         'The StompHandler has no active connection '
@@ -208,10 +212,19 @@ class StompHandler {
     _cleanUp();
   }
 
-  void _onData(dynamic data) {
+  void _onData(WebSocketEvent event) {
     _lastServerActivity = DateTime.now();
-    config.onDebugMessage('<<< $data');
-    _parser.parseData(data);
+    switch (event) {
+      case TextDataReceived(text: final text):
+        config.onDebugMessage('<<< $text');
+        _parser.parseText(text);
+      case BinaryDataReceived(data: final data):
+        config.onDebugMessage('<<< $data');
+        _parser.parseBytes(data);
+      case CloseReceived(code: final code, reason: final reason):
+        config.onDebugMessage(
+            'Server closed the connection with code: $code and reason: $reason');
+    }
   }
 
   void _onFrame(StompFrame frame) {
@@ -292,9 +305,9 @@ class StompHandler {
       _heartbeatSender = Timer.periodic(Duration(milliseconds: ttl), (_) {
         config.onDebugMessage('>>> PING');
         if (config.useSockJS) {
-          _channel?.sink.add('["\\n"]');
+          _webSocket?.sendText('["\\n"]');
         } else {
-          _channel?.sink.add('\n');
+          _webSocket?.sendText('\n');
         }
       });
     }
@@ -313,11 +326,15 @@ class StompHandler {
     }
   }
 
-  void _cleanUp() {
+  void _cleanUp() async {
     _connected = false;
     _isActive = false;
     _heartbeatSender?.cancel();
     _heartbeatReceiver?.cancel();
-    _channel?.sink.close();
+    try {
+      await _webSocket?.close();
+    } on WebSocketConnectionClosed catch (_) {
+      // ignored
+    }
   }
 }
