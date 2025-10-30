@@ -1,3 +1,7 @@
+## 3.0.0
+  - Replace `web_socket_channel` with `web_socket` package.
+    - This has breaking changes in the Parser API, but otherwise should be backwards compatible
+
 ## 2.1.3
   - Added `pingInterval` to `copyWith` for `StompConfig`. Thanks @AndruhovSasha
 
