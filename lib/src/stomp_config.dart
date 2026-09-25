@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io' show SecurityContext;
 
 import 'sock_js/sock_js_utils.dart';
 import 'stomp_frame.dart';
@@ -73,6 +74,12 @@ class StompConfig {
   /// Callback for debug messages
   final StompDebugCallback onDebugMessage;
 
+  /// Optional [SecurityContext] for the underlying TLS connection.
+  ///
+  /// Use it to trust certificate authorities that are absent from the
+  /// platform trust store. When null the default trust store is used.
+  final SecurityContext? securityContext;
+
   /// The transport url of the WebSocket to connect to
   String get connectUrl =>
       _connectUrl ??= useSockJS ? SockJsUtils().generateTransportUrl(url) : url;
@@ -98,6 +105,7 @@ class StompConfig {
     this.onWebSocketError = _noOp,
     this.onWebSocketDone = _noOp,
     this.onDebugMessage = _noOp,
+    this.securityContext,
     this.useSockJS = false,
   });
 
@@ -120,6 +128,7 @@ class StompConfig {
     this.onWebSocketError = _noOp,
     this.onWebSocketDone = _noOp,
     this.onDebugMessage = _noOp,
+    this.securityContext,
   }) : useSockJS = true;
 
   StompConfig copyWith({
@@ -142,6 +151,7 @@ class StompConfig {
     StompWebSocketErrorCallback? onWebSocketError,
     StompWebSocketDoneCallback? onWebSocketDone,
     StompDebugCallback? onDebugMessage,
+    SecurityContext? securityContext,
   }) {
     return StompConfig(
       url: url ?? this.url,
@@ -164,6 +174,7 @@ class StompConfig {
       onWebSocketError: onWebSocketError ?? this.onWebSocketError,
       onWebSocketDone: onWebSocketDone ?? this.onWebSocketDone,
       onDebugMessage: onDebugMessage ?? this.onDebugMessage,
+      securityContext: securityContext ?? this.securityContext,
     );
   }
 
